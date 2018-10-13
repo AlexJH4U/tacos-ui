@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>README.md</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="doc-style.css" />
+  <script src="doc-filelist.js"></script>
+  <script>
+    var relativeDir = "";
+    var thisFile = "README.md";
+    var defaultSidebar = true;
+  </script>
+  <script src="doc-script.js"></script>
+
+</head>
+<body>
+  <div id="sidebar_wrapper">
+    <div id="sidebar_switch">
+      <span class="tree">Files</span>
+      <span class="headings">Headings</span>
+    </div>
+    <div id="tree"></div>
+    <div id="headings">
+
+      <div class="heading h1">
+        <a href="#hosting-an-angular-application-on-azure-app-service">Hosting an Angular application on Azure App Service</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#azure-container-registry">Azure Container Registry</a>
+      </div>
+
+      <div class="heading h2">
+        <a href="#azure-devops">Azure Devops</a>
+      </div>
+
+      <div class="heading h3">
+        <a href="#build-pipeline">Build Pipeline</a>
+      </div>
+
+    </div>
+  </div>
+  <div id="sidebar-toggle"></div>
+  <div id="container">
+    <div class="docs markdown"><div class="pilwrap" id="hosting-an-angular-application-on-azure-app-service">
+  <h1>
+    <a href="#hosting-an-angular-application-on-azure-app-service" name="hosting-an-angular-application-on-azure-app-service" class="pilcrow"></a>
+Hosting an Angular application on Azure App Service
+  </h1>
+</div>
+<hr>
+<p>In this lab you will learn to:</p>
+<ul>
+<li>
+<p><a href="https://docs.microsoft.com/en-us/azure/app-service/?WT.mc_id=workshop-github-js-team">Azure App Service</a></p>
+<ul>
+<li>Create a App Service using the Azure portal</li>
+<li>Setup a web hook for continuous deployment in Container Registry</li>
+</ul>
+</li>
+<li>
+<p><a href="https://docs.microsoft.com/en-us/azure/container-registry/?WT.mc_id=workshop-github-js-team">Azure Container Registry</a></p>
+<ul>
+<li>Create a new Container Registry</li>
+<li>Build Docker image and deploy manually to container registry</li>
+</ul>
+</li>
+</ul>
+<div class="pilwrap" id="azure-container-registry">
+  <h2>
+    <a href="#azure-container-registry" name="azure-container-registry" class="pilcrow"></a>
+Azure Container Registry
+  </h2>
+</div>
+<ol>
+<li>
+<p>In the browser, navigate to the Azure portal, https://portal.azure.com, and create a new Container Registry account.</p>
+</li>
+<li>
+<p>In Visual Studio Code, go to the extensions panel and install the Docker extension. Alternatively, you can install it from the <a href="https://marketplace.visualstudio.com/items/?WT.mc_id=workshop-github-js-team&amp;itemName=PeterJausovec.vscode-docker">marketplace</a></p>
+</li>
+<li>
+<p><strong>Fork</strong> our app from https://github.com/Angular-Azure-Workshop/tacos-ui and switch to the <em>00-start</em> branch. Build for production by running <code>ng build --prod</code></p>
+</li>
+<li>
+<p>Once you have the extension installed and the tacos project forked create a file names <em>Dockerfile</em> and paste in the following:</p>
+</li>
+</ol>
+<pre><code>FROM nginx:stable-alpine
+LABEL author=&quot;Simona Cotin&quot;
+COPY ./dist/tacos-ui /var/www
+COPY nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80 443
+ENTRYPOINT [&quot;nginx&quot;,&quot;-g&quot;,&quot;daemon off;&quot;]
+</code></pre>
+<ol start="3">
+<li>
+<p>Next, create a <em>nginx.conf</em> file and paste in the contents from <a href="https://github.com/simonaco/tacos-ui-/blob/master/nginx.conf">here</a></p>
+</li>
+<li>
+<p>From your IDE, run</p>
+</li>
+</ol>
+<pre><code>docker build -t &lt;your_cr&gt;/tacos:1.0 .
+docker login --username $DOCKER_USER --password $DOCKER_PASS &lt;your_cr&gt;
+docker push &lt;your_cr&gt;/tacos:1.0
+</code></pre>
+<ol start="5">
+<li>
+<p>In the Azure Portal, go to your newly create container registry, <em>Repositories</em> -&gt; <em>tacos</em> -&gt; <em>tags</em>. Click on the three dots next to <em>1.0</em> and choose Deploy to Web App. From there create a new App Service account. This enables continuous deployment by creating a webhook.</p>
+</li>
+<li>
+<p>Navigate to the new AppService and visit page to check deployment.</p>
+</li>
+<li>
+<p>Now automate the process by adding Azure DevOps</p>
+</li>
+</ol>
+<div class="pilwrap" id="azure-devops">
+  <h2>
+    <a href="#azure-devops" name="azure-devops" class="pilcrow"></a>
+Azure Devops
+  </h2>
+</div>
+<ol>
+<li>In VS Code, go to the root of your project, create a file named <em>azure-pipelines.yml</em> and paste in the configuration bellow. <strong><em>Commit &amp; push changes</em></strong></li>
+</ol>
+<pre><code class="yml"><span class="hljs-attr">name:</span> <span class="hljs-string">tacos</span>
+
+<span class="hljs-attr">pool:</span>
+<span class="hljs-attr">  vmImage:</span> <span class="hljs-string">'Ubuntu 16.04'</span>
+
+<span class="hljs-attr">trigger:</span>
+<span class="hljs-bullet">  -</span> <span class="hljs-string">master</span>
+
+<span class="hljs-attr">steps:</span>
+<span class="hljs-attr">  - task:</span> <span class="hljs-string">NodeTool@0</span>
+<span class="hljs-attr">    inputs:</span>
+<span class="hljs-attr">      versionSpec:</span> <span class="hljs-string">'8.x'</span>
+<span class="hljs-attr">    displayName:</span> <span class="hljs-string">'Installing Node.js'</span>
+
+<span class="hljs-attr">  - script:</span> <span class="hljs-string">|
+      npm install
+      npm run build -- --prod
+</span><span class="hljs-attr">    displayName:</span> <span class="hljs-string">'Running npm install and build'</span>
+<span class="hljs-attr">  - script:</span> <span class="hljs-string">docker</span> <span class="hljs-string">build</span> <span class="hljs-bullet">-t</span> <span class="hljs-string">$(dockerId)/$(imageName)</span>  <span class="hljs-string">.</span>
+<span class="hljs-attr">  - script:</span> <span class="hljs-string">docker</span> <span class="hljs-string">login</span> <span class="hljs-bullet">-u</span> <span class="hljs-string">$(user)</span> <span class="hljs-bullet">-p</span> <span class="hljs-string">$(pswd)</span> <span class="hljs-string">sicotin.azurecr.io</span>
+<span class="hljs-attr">  - script:</span> <span class="hljs-string">docker</span> <span class="hljs-string">push</span> <span class="hljs-string">$(dockerId)/$(imageName)</span>
+</code></pre>
+<div class="pilwrap" id="build-pipeline">
+  <h3>
+    <a href="#build-pipeline" name="build-pipeline" class="pilcrow"></a>
+Build Pipeline
+  </h3>
+</div>
+<ol>
+<li>
+<p>In the browser, go to http://dev.azure.com and click Sign in to Azure DevOps, use your Microsoft account to sign in. On the landing page click <em>New project</em>, fill in the project name with tacos-ui and click <em>Create</em></p>
+</li>
+<li>
+<p>In the new project, got to <em>Pipelines</em> -&gt; <em>Builds</em> and click <em>New Pipeline</em>. Select Github as source, Authorize Gitub and choose the project you forked earlier, branch <em>00-start</em>. Continue and configure the build to use <em>Configuration as code</em> and select the yml file you created earlier.</p>
+</li>
+<li>
+<p>Go to the variables tab and create new ones for dockerId, user, imageName and password.</p>
+</li>
+<li>
+<p>Save and queue. Click on the build link to view the in progress project</p>
+</li>
+</ol>
+</div>
+  </div>
+</body>
+</html>
