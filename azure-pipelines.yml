@@ -4,7 +4,7 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 trigger:
-  - master
+  - module01-docker-start
 
 steps:
   - task: NodeTool@0
